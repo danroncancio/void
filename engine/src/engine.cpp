@@ -22,6 +22,12 @@ namespace lum
     {
         // Init engine modules
 
+        if (!renderer.Init())
+        {
+            SDL_Log("Failed to initilized renderer");
+            return false;
+        }
+
         if (!sceneManager.Init())
         {
             SDL_Log("Failed to initialized scene manager");
@@ -34,6 +40,7 @@ namespace lum
     void Engine::Shutdown()
     {
         sceneManager.Shutdown();
+        renderer.Shutdown();
     }
 
     void Engine::Input(SDL_Event *p_event)

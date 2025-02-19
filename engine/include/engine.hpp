@@ -5,6 +5,7 @@
 
 #include <SDL3/SDL.h>
 
+#include "renderer.hpp"
 #include "scene_manager.hpp"
 
 namespace lum
@@ -12,6 +13,7 @@ namespace lum
     class Engine
     {
     public:
+        Renderer renderer;
         SceneManager sceneManager;
 
         float deltaTime{};

@@ -2,6 +2,7 @@
 #include "src/scene.cpp"
 #include "src/autoload.cpp"
 #include "src/scene_manager.cpp"
+#include "src/renderer.cpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
