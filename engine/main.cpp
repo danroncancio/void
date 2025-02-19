@@ -3,6 +3,7 @@
 #include "src/autoload.cpp"
 #include "src/scene_manager.cpp"
 #include "src/renderer.cpp"
+#include "src/asset_manager.cpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
@@ -41,7 +42,9 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     lum::Engine *engine = static_cast<lum::Engine *>(appstate);
 
     engine->Update();
-    engine->Render();
+
+    if (!engine->Render())
+        return SDL_APP_FAILURE;
 
     return SDL_APP_CONTINUE;
 }

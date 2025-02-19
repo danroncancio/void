@@ -7,6 +7,7 @@
 
 #include "renderer.hpp"
 #include "scene_manager.hpp"
+#include "asset_manager.hpp"
 
 namespace lum
 {
@@ -14,6 +15,7 @@ namespace lum
     {
     public:
         Renderer renderer;
+        AssetManager assetManager;
         SceneManager sceneManager;
 
         float deltaTime{};
@@ -31,7 +33,7 @@ namespace lum
 
         void Input(SDL_Event *p_event);
         void Update();
-        void Render();
+        bool Render();
 
     private:
         static std::unique_ptr<Engine> m_instance;

@@ -22,6 +22,12 @@ namespace lum
     {
         // Init engine modules
 
+        if (!assetManager.Init())
+        {
+            SDL_Log("Failed to initialized asset manager");
+            return false;
+        }
+
         if (!renderer.Init())
         {
             SDL_Log("Failed to initilized renderer");
@@ -40,6 +46,7 @@ namespace lum
     void Engine::Shutdown()
     {
         sceneManager.Shutdown();
+        assetManager.Shutdown();
         renderer.Shutdown();
     }
 
@@ -47,6 +54,15 @@ namespace lum
     {
         switch (p_event->type)
         {
+        case SDL_EVENT_WINDOW_RESIZED:
+            renderer.UpdateWindowSize(p_event->display.data1, p_event->display.data2);
+            break;
+        case SDL_EVENT_KEY_DOWN:
+            if (p_event->key.scancode == SDL_SCANCODE_F11)
+            {
+                renderer.ToggleWindowFullscreen();
+            }
+            break;
         default:
             break;
         }
@@ -54,11 +70,15 @@ namespace lum
 
     void Engine::Update()
     {
-
+        
     }
 
-    void Engine::Render()
+    bool Engine::Render()
     {
+        renderer.PreRender();
+        if (!renderer.RenderFrame())
+            return false;
 
+        return true;
     }
 }
