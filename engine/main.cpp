@@ -1,4 +1,6 @@
 #include "src/engine.cpp"
+#include "src/scene.cpp"
+#include "src/autoload.cpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
