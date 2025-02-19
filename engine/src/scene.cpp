@@ -2,11 +2,11 @@
 
 namespace lum
 {
-	Scene::Scene() = default;
+    Scene::Scene() = default;
 
-	Scene::~Scene() = default;
+    Scene::~Scene() = default;
 
-	void Scene::DebugDraw()
-	{
-	};
+    void Scene::DebugDraw()
+    {
+    };
 }

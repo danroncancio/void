@@ -3,8 +3,8 @@
 namespace lum
 {
 
-	Autoload::Autoload() = default;
+    Autoload::Autoload() = default;
 
-	Autoload::~Autoload() = default;
+    Autoload::~Autoload() = default;
 
 }

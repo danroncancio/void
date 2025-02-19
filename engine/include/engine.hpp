@@ -5,32 +5,39 @@
 
 #include <SDL3/SDL.h>
 
+#include "scene_manager.hpp"
+
 namespace lum
 {
-	class Engine
-	{
-	public:
-		float deltaTime{};
-		float scaledDeltaTime{};
-		float engineTime{};
-		float timeScalar{1.0f};
+    class Engine
+    {
+    public:
+        SceneManager sceneManager;
 
-	public:
-		Engine();
-		~Engine();
+        float deltaTime{};
+        float scaledDeltaTime{};
+        float engineTime{};
+        float timeScalar{1.0f};
 
-		static Engine &Get();
-		bool Init();
-		void Shutdown();
+    public:
+        Engine();
+        ~Engine();
 
-		void Input(SDL_Event *p_event);
-		void Update();
-		void Render();
+        static Engine &Get();
+        bool Init();
+        void Shutdown();
 
-	private:
-		static std::unique_ptr<Engine> m_instance;
-	};
+        void Input(SDL_Event *p_event);
+        void Update();
+        void Render();
 
+    private:
+        static std::unique_ptr<Engine> m_instance;
+
+    private:
+        Engine(const Engine &) = delete;
+        Engine &operator=(const Engine &) = delete;
+    };
 }
 
 #endif // !ENGINE_H
