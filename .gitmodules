@@ -10,3 +10,9 @@
 [submodule "vendor/sdl_image"]
 	path = vendor/sdl_image
 	url = https://github.com/libsdl-org/SDL_image.git
+[submodule "vendor/imgui"]
+	path = vendor/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "vendor/implot"]
+	path = vendor/implot
+	url = https://github.com/epezent/implot.git
