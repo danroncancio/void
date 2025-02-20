@@ -1,12 +1,13 @@
 #include "scene.hpp"
 
+#include "engine.hpp"
+
 namespace lum
 {
-    Scene::Scene() = default;
+    Scene::Scene() :
+        assetMgr(Engine::Get().assetManager),
+        renderer(Engine::Get().renderer)
+    {};
 
     Scene::~Scene() = default;
-
-    void Scene::DebugDraw()
-    {
-    };
 }

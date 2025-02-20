@@ -102,15 +102,7 @@ namespace lum
 
     void Renderer::PreRender()
     {
-        /*time += 0.25;
 
-        if (time >= 10.0f)
-        {
-            m_windowViewport.x += 1;
-            SDL_Log("x: %.1f", m_windowViewport.x);
-
-            time = 0;
-        }*/
     }
 
     bool Renderer::RenderFrame()
@@ -542,8 +534,8 @@ namespace lum
         float heightRatio = static_cast<float>(winSize.y) / resolution.y;
 
         // Use the floor of the ratios to determine integer scaling factors
-        int widthScale = static_cast<int>(floorf(widthRatio));
-        int heightScale = static_cast<int>(floorf(heightRatio));
+        int widthScale = static_cast<int>(SDL_floorf(widthRatio));
+        int heightScale = static_cast<int>(SDL_floorf(heightRatio));
 
         // Choose the minimum scale to ensure we stay within the limits
         int scale = std::min(widthScale, heightScale);
@@ -552,12 +544,18 @@ namespace lum
         int newWinWidth = static_cast<int>(resolution.x) * scale;
         int newWinHeight = static_cast<int>(resolution.y) * scale;
 
-        windowDesc.upscaledResolution.x = floorf(static_cast<float>(newWinWidth));
-        windowDesc.upscaledResolution.y = floorf(static_cast<float>(newWinHeight));
+        windowDesc.upscaledResolution.x = static_cast<float>(newWinWidth);
+        windowDesc.upscaledResolution.y = static_cast<float>(newWinHeight);
+
+        windowDesc.upscaledResolution.x = SDL_max(windowDesc.upscaledResolution.x, windowDesc.resolution.x);
+        windowDesc.upscaledResolution.y = SDL_max(windowDesc.upscaledResolution.y, windowDesc.resolution.y);
 
         // Calculate viewport position offset
-        windowDesc.targetOffset.x = floorf((static_cast<int>(winSize.x) - windowDesc.upscaledResolution.x) / 2);
-        windowDesc.targetOffset.y = floorf((static_cast<int>(winSize.y) - windowDesc.upscaledResolution.y) / 2);
+        windowDesc.targetOffset.x = SDL_floorf((static_cast<int>(winSize.x) - windowDesc.upscaledResolution.x) / 2);
+        windowDesc.targetOffset.y = SDL_floorf((static_cast<int>(winSize.y) - windowDesc.upscaledResolution.y) / 2);
+
+        windowDesc.targetOffset.x = SDL_max(windowDesc.targetOffset.x, 0);
+        windowDesc.targetOffset.y = SDL_max(windowDesc.targetOffset.y, 0);
 
         m_windowViewport = {
             static_cast<float>(windowDesc.targetOffset.x),
