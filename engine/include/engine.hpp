@@ -18,10 +18,15 @@ namespace lum
         AssetManager assetManager;
         SceneManager sceneManager;
 
+        uint64_t lastTime{};
+        uint64_t currentTime{};
+
         float deltaTime{};
         float scaledDeltaTime{};
         float engineTime{};
         float timeScalar{1.0f};
+
+        bool minimized{};
 
     public:
         Engine();

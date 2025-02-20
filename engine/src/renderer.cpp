@@ -1,6 +1,7 @@
 #include "renderer.hpp"
 
 #include <array>
+#include <algorithm>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL3_shadercross/SDL_shadercross.h>
@@ -135,7 +136,29 @@ namespace lum
 
             m_renderPass = SDL_BeginGPURenderPass(m_commandBuffer, &colorTI, 1, nullptr);
 
+            // Sort draw queue by layer
+
+            std::sort(m_frameDrawQueue.begin(), m_frameDrawQueue.end(), [](const auto &a, const auto &b) {
+                return std::visit([](const auto &arg) { return arg.properties.layer; }, a.second) < 
+                       std::visit([](const auto &arg) { return arg.properties.layer; }, b.second);
+            });
+
+            // Drawing
+
+            for (const auto &drawDesc : m_frameDrawQueue)
+            {
+                std::visit([&](auto &&arg) {
+                    using T = std::decay_t<decltype(arg)>;
+
+                    if constexpr (std::is_same_v<T, cSprite>)
+                        DrawSprite(drawDesc.first, arg);
+
+                }, drawDesc.second);
+            }
+
             SDL_EndGPURenderPass(m_renderPass);
+
+            m_frameDrawQueue.clear();
 
             //
             // Draw render target to window
@@ -176,6 +199,40 @@ namespace lum
         }
 
         return true;
+    }
+
+    void Renderer::AddToDrawQueue(DrawDesc &p_drawDesc)
+    {
+        m_frameDrawQueue.push_back(p_drawDesc);
+    }
+
+    void Renderer::DrawSprite(const cTranslation &p_translationDesc, const cSprite &p_spriteDesc)
+    {
+        Texture *texture = Engine::Get().assetManager.GetTexture(p_spriteDesc.tag);
+
+        SDL_BindGPUGraphicsPipeline(m_renderPass, m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline);
+
+        SDL_GPUBufferBinding vertBufferBinding{ m_quadVertexBuffer, 0 };
+        SDL_BindGPUVertexBuffers(m_renderPass, 0, &vertBufferBinding, 1);
+
+        SDL_GPUBufferBinding idxBufferBinding{ m_quadIndexBuffer, 0 };
+        SDL_BindGPUIndexBuffer(m_renderPass, &idxBufferBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+        SDL_GPUTextureSamplerBinding texSamplerBinding{ texture->data, m_rtSampler };
+        SDL_BindGPUFragmentSamplers(m_renderPass, 0, &texSamplerBinding, 1);
+
+        m_modelMat = mat4(1.0f);
+        m_modelMat = glm::translate(m_modelMat, vec3(p_translationDesc.position, 0.0f));
+        m_modelMat = glm::rotate(m_modelMat, radians(p_translationDesc.rotation), vec3(0.0f, 0.0f, 1.0f));
+        m_modelMat = glm::scale(m_modelMat, vec3(texture->size.x * p_translationDesc.scale, texture->size.y * p_translationDesc.scale, 1.0f));
+
+        ProjMatUniform compoundMat{ m_modelMat, m_viewMat, m_projMat };
+        SDL_PushGPUVertexUniformData(m_commandBuffer, 0, &compoundMat, sizeof(ProjMatUniform));
+
+        TimeColorUniform timeColUni = { 0.0f, p_spriteDesc.properties.modulateColor };
+        SDL_PushGPUFragmentUniformData(m_commandBuffer, 0, &timeColUni, sizeof(TimeColorUniform));
+
+        SDL_DrawGPUIndexedPrimitives(m_renderPass, 6, 1, 0, 0, 0);
     }
 
     bool Renderer::CreateWindowAndGPUDevice()
@@ -432,8 +489,7 @@ namespace lum
         transferCI.size = (sizeof(PosTexVertex) * 4) + (sizeof(uint16_t) * 6);
         SDL_GPUTransferBuffer *transferBuffer = SDL_CreateGPUTransferBuffer(gpuDevice, &transferCI);
 
-        PosTexVertex *mappedTransferData =
-            static_cast<PosTexVertex *>(SDL_MapGPUTransferBuffer(gpuDevice, transferBuffer, false));
+        PosTexVertex *mappedTransferData = static_cast<PosTexVertex *>(SDL_MapGPUTransferBuffer(gpuDevice, transferBuffer, false));
 
         mappedTransferData[0] = PosTexVertex{ vec3(-0.5f, 0.5f, 0.0f), vec2(0.0f, 0.0f) };
         mappedTransferData[1] = PosTexVertex{ vec3(0.5f, 0.5f, 0.0f), vec2(1.0f, 0.0f) };

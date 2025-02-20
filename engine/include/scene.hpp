@@ -3,6 +3,8 @@
 
 #include "asset_manager.hpp"
 #include "renderer.hpp"
+#include "ecs.hpp"
+#include "engine_components.hpp"
 
 namespace lum
 {
@@ -10,6 +12,7 @@ namespace lum
     {
     public:
         bool loaded{};
+        ECS ecs;
 
     public:
         Scene();

@@ -1,9 +1,13 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include <vector>
+#include <unordered_map>
+
 #include <glm/glm.hpp>
 
 #include "renderer_types.hpp"
+#include "engine_components.hpp"
 
 using namespace glm;
 
@@ -37,13 +41,17 @@ namespace lum
 
         void PreRender();
         bool RenderFrame();
+        void AddToDrawQueue(DrawDesc &p_drawDesc);
+        void DrawSprite(const cTranslation &p_translationDesc, const cSprite &p_spriteDesc);
 
     private:
+        bool m_windowFullscreen{};
+
+        mat4 m_modelMat{ 1.0 };
+        mat4 m_viewMat{ 1.0 };
         mat4 m_projMat{};
 
-        bool m_windowFullscreen{};
         SDL_Window *m_window{};
-        std::unordered_map<uint32_t, GraphicPipelineInfo> m_graphicsPipelines{};
 
         SDL_GPURenderPass *m_renderPass{};
         SDL_GPUCommandBuffer *m_commandBuffer{};
@@ -59,7 +67,8 @@ namespace lum
 
         SDL_GPUViewport m_windowViewport{};
 
-        float time{};
+        std::vector<DrawDesc> m_frameDrawQueue{};
+        std::unordered_map<uint32_t, GraphicPipelineInfo> m_graphicsPipelines{};
 
     private:
         bool CreateWindowAndGPUDevice();
