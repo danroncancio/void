@@ -1,7 +1,10 @@
 #ifndef ASSET_TYPES_H
 #define ASSET_TYPES_H
 
+#include <glm/glm.hpp>
 #include <SDL3/SDL.h>
+
+using namespace glm;
 
 namespace lum
 {
@@ -13,9 +16,18 @@ namespace lum
 
     struct Shader
     {
-        const char     *tag;
+        const char     *tag{};
         ShaderType      type{};
         SDL_GPUShader  *data{};
+        const char     *filePath{};
+        SDL_Time        lastModifyTime{};
+    };
+
+    struct Texture
+    {
+        const char     *tag{};
+        vec2            size{};
+        SDL_GPUTexture *data{};
         const char     *filePath{};
         SDL_Time        lastModifyTime{};
     };

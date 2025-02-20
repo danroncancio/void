@@ -16,17 +16,23 @@ set(SDLSHADERCROSS_STATIC ON)
 set(SDLSHADERCROSS_CLI OFF)
 add_subdirectory(vendor/sdl_shadercross)
 
+set(SDLIMAGE_VENDORED OFF)
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(vendor/sdl_image)
+
 target_include_directories(void PRIVATE
     engine/include
     vendor/glm
     vendor/sdl/include
     vendor/sdl_shadercross/include
+    vendor/sdl_image/include
 )
 
 target_link_libraries(void PRIVATE
     glm::glm
     SDL3::SDL3-static
     SDL3_shadercross::SDL3_shadercross-static
+    SDL3_image::SDL3_image-static
 )
 
 set_property(TARGET void PROPERTY CXX_STANDARD 17)

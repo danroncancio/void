@@ -21,8 +21,8 @@ namespace lum
     class Renderer
     {
     public:
-        WindowDesc windowDesc;
-        SDL_GPUDevice *gpuDevice;
+        WindowDesc windowDesc{};
+        SDL_GPUDevice *gpuDevice{};
         vec4 clearColor{ 1.0f };
 
     public:
@@ -42,7 +42,7 @@ namespace lum
         mat4 m_projMat{};
 
         bool m_windowFullscreen{};
-        SDL_Window *m_window;
+        SDL_Window *m_window{};
         std::unordered_map<uint32_t, GraphicPipelineInfo> m_graphicsPipelines{};
 
         SDL_GPURenderPass *m_renderPass{};
