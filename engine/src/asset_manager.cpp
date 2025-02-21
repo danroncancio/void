@@ -245,4 +245,120 @@ namespace lum
 
         return true;
     }
+
+    void AssetManager::CheckForModifiedAssets()
+    {
+        auto &renderer = Engine::Get().renderer;
+        SDL_PathInfo pathInfo{};
+
+        // Textures
+
+        for (auto const &[_, textureAsset] : m_textureStorage)
+        {
+            if (!SDL_GetPathInfo((m_assetsDirectoryPath + textureAsset.filePath).c_str(), &pathInfo))
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetMgr: Couldn't find texture asset file while checking for changes");
+                continue;
+            }
+
+            if (textureAsset.lastModifyTime == pathInfo.modify_time)
+                continue;
+
+            SDL_Log("--- Texture asset reload");
+
+            // Even though we are doing this at the beginning of the frame, we need to wait for the GPU to idle
+            // maybe because of like concurrency stuff?
+            SDL_WaitForGPUIdle(renderer.gpuDevice);
+
+            LoadTexture(textureAsset.tag, textureAsset.filePath, true);
+        }
+
+        // Shaders
+
+        for (auto &[tag, shaderAsset] : m_shaderStorage)
+        {
+            if (!SDL_GetPathInfo((m_assetsDirectoryPath + shaderAsset.filePath + ".glsl").c_str(), &pathInfo))
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                    "AssetMgr: Couldn't find shader asset file while checking for changes");
+                continue;
+            }
+
+            if (shaderAsset.lastModifyTime == pathInfo.modify_time)
+                continue;
+
+            SDL_Log("--- Shader asset reload");
+
+            if (!CompileShader(shaderAsset.filePath))
+            {
+                SDL_GetPathInfo((m_assetsDirectoryPath + shaderAsset.filePath + ".glsl").c_str(), &pathInfo);
+                shaderAsset.lastModifyTime = pathInfo.modify_time;
+                continue;
+            }
+
+            SDL_WaitForGPUIdle(renderer.gpuDevice);
+            LoadShader(shaderAsset.tag, shaderAsset.filePath, true);
+
+            // Find pipelines that use the shader just compiled
+
+            for (auto const &[pipelineTag, pipelineDesc] : renderer.m_graphicsPipelines)
+            {
+                // 1 vert tag | 2 frag tag
+
+                if (SDL_strcmp(shaderAsset.tag, pipelineDesc.vertTag) == 0 || SDL_strcmp(shaderAsset.tag, pipelineDesc.fragTag) == 0)
+                {
+                    SDL_ReleaseGPUGraphicsPipeline(renderer.gpuDevice, pipelineDesc.pipeline);
+
+                    SDL_Log("Graphics pipeline '%s' will be recreated", pipelineDesc.tag);
+
+                    renderer.CreateGraphicsPipeline(pipelineDesc.tag, pipelineDesc.vertTag, pipelineDesc.fragTag, true);
+                }
+            }
+        }
+    }
+
+    bool AssetManager::CompileShader(const char *p_path)
+    {
+        std::string shaderStage = "-fshader-stage=";
+
+        if (SDL_strstr(p_path, ".vert"))
+        {
+            shaderStage += "vert";
+        }
+        else if (SDL_strstr(p_path, ".frag"))
+        {
+            shaderStage += "frag";
+        }
+
+        std::string fullPath = m_assetsDirectoryPath + p_path;
+        std::string inputPath = fullPath + ".glsl";
+        std::string outputPath = fullPath + ".spv";
+
+        // IMPORTANT: Assuming we have glslc installed (VulkanSDK) and in the PATH
+
+        const char *args[] = { "glslc", shaderStage.c_str(), inputPath.c_str(), "-o", outputPath.c_str(), NULL };
+        SDL_Process *shaderCompProc = SDL_CreateProcess(args, false);
+        if (!shaderCompProc)
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "AssetMgr: Couldn't launch glslc process for compiling shader");
+            return false;
+        }
+
+        int exitCode;
+        SDL_WaitProcess(shaderCompProc, true, &exitCode);
+
+        if (exitCode == 0)
+        {
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "AssetMgr: Shader '%s' compiling successful.", p_path);
+        }
+        else
+        {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "AssetMgr: Error compiling shader '%s'", p_path);
+            return false;
+        }
+
+        SDL_DestroyProcess(shaderCompProc);
+
+        return true;
+    }
 }

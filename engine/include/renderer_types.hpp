@@ -34,6 +34,7 @@ namespace lum
 
     struct GraphicPipelineInfo
     {
+        const char *tag;
         SDL_GPUGraphicsPipeline *pipeline;
         const char *vertTag;
         const char *fragTag;

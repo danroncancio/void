@@ -374,12 +374,12 @@ namespace lum
 
         if (!p_reload)
         {
-            m_graphicsPipelines.emplace(utils::HashStr32(p_tag), GraphicPipelineInfo{ pipeline, p_vertTag, p_fragTag });
+            m_graphicsPipelines.emplace(utils::HashStr32(p_tag), GraphicPipelineInfo{ p_tag, pipeline, p_vertTag, p_fragTag });
         }
         else
         {
             SDL_LogInfo(SDL_LOG_CATEGORY_VIDEO, "Renderer: Graphics pipeline with tag '%s' is being reloaded", p_tag);
-            m_graphicsPipelines[utils::HashStr32(p_tag)] = GraphicPipelineInfo{ pipeline, p_vertTag, p_fragTag };
+            m_graphicsPipelines[utils::HashStr32(p_tag)] = GraphicPipelineInfo{ p_tag, pipeline, p_vertTag, p_fragTag };
         }
 
         return true;

@@ -6,6 +6,7 @@
 
 #include <glm/glm.hpp>
 
+#include "asset_manager.hpp"
 #include "renderer_types.hpp"
 #include "engine_components.hpp"
 
@@ -24,6 +25,8 @@ namespace lum
 
     class Renderer
     {
+        friend AssetManager;
+
     public:
         WindowDesc windowDesc{};
         SDL_GPUDevice *gpuDevice{};

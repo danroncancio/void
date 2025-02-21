@@ -100,6 +100,8 @@ namespace lum
     {
         auto start = SDL_GetTicksNS();
 
+        assetManager.CheckForModifiedAssets();
+
         currentTime = SDL_GetTicksNS();
         deltaTime = static_cast<float>(currentTime - lastTime) / SDL_NS_PER_SECOND;
         lastTime = currentTime;
