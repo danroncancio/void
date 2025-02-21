@@ -5,6 +5,10 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL3_shadercross/SDL_shadercross.h>
+#include <imgui.h>
+#include <implot.h>
+#include <backends/imgui_impl_sdl3.h>
+#include <backends/imgui_impl_sdlgpu3.h>
 
 #include "utilities.hpp"
 
@@ -55,6 +59,8 @@ namespace lum
             return false;
         }
 
+        ImGuiInit();
+
         //
 
         m_windowViewport = { 0.0f, 0.0f, windowDesc.size.x, windowDesc.size.y, 0.0f, 0.0f };
@@ -68,6 +74,8 @@ namespace lum
 
     void Renderer::Shutdown()
     {
+        ImGuiShutdown();
+
         SDL_ReleaseGPUTexture(gpuDevice, m_rtTexture);
 
         SDL_ReleaseGPUSampler(gpuDevice, m_rtSampler);
@@ -103,11 +111,20 @@ namespace lum
 
     void Renderer::PreRender()
     {
+        currentPipelineBinded = nullptr;
 
+        // Start the Dear ImGui frame
+
+        ImGui_ImplSDLGPU3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
     }
 
     bool Renderer::RenderFrame()
     {
+        ImGui::Render();
+        ImDrawData *draw_data = ImGui::GetDrawData();
+
         m_commandBuffer = SDL_AcquireGPUCommandBuffer(gpuDevice);
         if (!m_commandBuffer)
         {
@@ -124,6 +141,8 @@ namespace lum
 
         if (swapchainTexture && m_rtTexture)
         {
+            Imgui_ImplSDLGPU3_PrepareDrawData(draw_data, m_commandBuffer);
+
             //
             // Draw to render target
             //
@@ -189,6 +208,8 @@ namespace lum
 
             SDL_DrawGPUIndexedPrimitives(m_renderPass, 6, 1, 0, 0, 0);
 
+            ImGui_ImplSDLGPU3_RenderDrawData(draw_data, m_commandBuffer, m_renderPass);
+
             SDL_EndGPURenderPass(m_renderPass);
         }
 
@@ -210,7 +231,12 @@ namespace lum
     {
         Texture *texture = Engine::Get().assetManager.GetTexture(p_spriteDesc.tag);
 
-        SDL_BindGPUGraphicsPipeline(m_renderPass, m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline);
+        if (currentPipelineBinded != m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline)
+        {
+            SDL_BindGPUGraphicsPipeline(m_renderPass, m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline);
+
+            currentPipelineBinded = m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline;
+        }
 
         SDL_GPUBufferBinding vertBufferBinding{ m_quadVertexBuffer, 0 };
         SDL_BindGPUVertexBuffers(m_renderPass, 0, &vertBufferBinding, 1);
@@ -621,5 +647,47 @@ namespace lum
             0.0f,
             0.0f
         };
+    }
+
+    void Renderer::ImGuiInit()
+    {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImPlot::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+        // Setup Dear ImGui style
+        // ImGui::StyleColorsDark();
+        ImGui::StyleColorsLight();
+
+        ImGuiStyle &style = ImGui::GetStyle();
+
+        // Rounded corners
+        style.WindowRounding = 5.0f;
+        style.ChildRounding = 5.0f;
+        style.FrameRounding = 2.5f;
+        style.PopupRounding = 2.5f;
+
+        // Setup Platform/Renderer backends
+
+        ImGui_ImplSDL3_InitForSDLGPU(m_window);
+        ImGui_ImplSDLGPU3_InitInfo init_info = {};
+        init_info.Device = gpuDevice;
+        init_info.ColorTargetFormat = SDL_GetGPUSwapchainTextureFormat(gpuDevice, m_window);
+        init_info.MSAASamples = SDL_GPU_SAMPLECOUNT_1;
+        ImGui_ImplSDLGPU3_Init(&init_info);
+    }
+
+    void Renderer::ImGuiShutdown()
+    {
+        ImPlot::DestroyContext();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui_ImplSDLGPU3_Shutdown();
+        ImGui::DestroyContext();
     }
 }

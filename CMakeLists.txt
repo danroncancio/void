@@ -1,7 +1,29 @@
 ﻿cmake_minimum_required (VERSION 3.12)
 project ("void")
 
-add_executable (void engine/main.cpp)
+# Imgui files
+
+file(GLOB IMGUI_FILES Vendor/imgui/*.cpp Vendor/imgui/*.h)
+file(GLOB IMGUI_BACKEND_FILES
+    Vendor/imgui/backends/imgui_impl_sdl3.h
+    Vendor/imgui/backends/imgui_impl_sdl3.cpp
+    Vendor/imgui/backends/imgui_impl_sdlgpu3.h
+    Vendor/imgui/backends/imgui_impl_sdlgpu3.cpp
+    Vendor/imgui/backends/imgui_impl_sdlgpu3_shaders.h
+)
+
+# Implot files
+
+file(GLOB IMPLOT_FILES Vendor/implot/*.cpp Vendor/implot/*.h)
+
+add_executable (void
+    engine/main.cpp
+    ${IMGUI_FILES}
+    ${IMGUI_BACKEND_FILES}
+    ${IMPLOT_FILES}
+)
+
+# Dependencies
 
 add_subdirectory(vendor/glm)
 
@@ -26,6 +48,8 @@ target_include_directories(void PRIVATE
     vendor/sdl/include
     vendor/sdl_shadercross/include
     vendor/sdl_image/include
+    vendor/imgui
+    vendor/implot
 )
 
 target_link_libraries(void PRIVATE

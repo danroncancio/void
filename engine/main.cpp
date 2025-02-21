@@ -55,7 +55,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
     engine->Input(event);
 
-    if (event->type == SDL_EVENT_QUIT || event->type == SDL_SCANCODE_ESCAPE)
+    if (event->type == SDL_EVENT_QUIT || event->key.scancode == SDL_SCANCODE_ESCAPE)
         return SDL_APP_SUCCESS;
 
     return SDL_APP_CONTINUE;

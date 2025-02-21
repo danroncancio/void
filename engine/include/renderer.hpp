@@ -70,6 +70,8 @@ namespace lum
         std::vector<DrawDesc> m_frameDrawQueue{};
         std::unordered_map<uint32_t, GraphicPipelineInfo> m_graphicsPipelines{};
 
+        SDL_GPUGraphicsPipeline *currentPipelineBinded{ nullptr };
+
     private:
         bool CreateWindowAndGPUDevice();
         bool CreateGraphicsPipeline(const char *p_tag, const char *p_vertTag, const char *p_fragTag, bool p_reload = false);
@@ -78,6 +80,9 @@ namespace lum
         bool SetupQuadData();
         bool SetupRenderTargetSampler();
         void CalculateRenderTargetResolution();
+
+        void ImGuiInit();
+        void ImGuiShutdown();
     };
 }
 

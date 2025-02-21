@@ -2,6 +2,9 @@
 
 #include <memory>
 
+#include <imgui.h>
+#include <backends/imgui_impl_sdl3.h>
+
 #include "../../game/scenes/test_ground_scn.hpp"
 
 namespace lum
@@ -51,7 +54,7 @@ namespace lum
 
         sceneManager.RegisterScene("test_ground", std::make_shared<shmup::TestGroundScn>(), true);
 
-        lastTime = SDL_GetTicks();
+        lastTime = SDL_GetTicksNS();
 
         SDL_Log("Engine initialized");
 
@@ -69,6 +72,8 @@ namespace lum
 
     void Engine::Input(SDL_Event *p_event)
     {
+        ImGui_ImplSDL3_ProcessEvent(p_event);
+
         switch (p_event->type)
         {
         case SDL_EVENT_WINDOW_RESIZED:
@@ -93,22 +98,36 @@ namespace lum
 
     void Engine::Update()
     {
-        currentTime = SDL_GetTicks();
-        deltaTime = static_cast<float>(currentTime - lastTime) / SDL_MS_PER_SECOND;
+        auto start = SDL_GetTicksNS();
+
+        currentTime = SDL_GetTicksNS();
+        deltaTime = static_cast<float>(currentTime - lastTime) / SDL_NS_PER_SECOND;
         lastTime = currentTime;
 
+        metricsWindows.StatsUpdate(deltaTime);
+
         sceneManager.currentScene->Update(deltaTime);
+
+        auto end = SDL_GetTicksNS();
+        metricsWindows.updateFrameTime = static_cast<float>(end - start) / SDL_NS_PER_MS;
     }
 
     bool Engine::Render()
     {
+        auto start = SDL_GetTicksNS();
+
         renderer.PreRender();
 
         if (!minimized)
             sceneManager.currentScene->Draw();
 
+        metricsWindows.ShowStatsWindows(deltaTime);
+
         if (!renderer.RenderFrame())
             return false;
+
+        auto end = SDL_GetTicksNS();
+        metricsWindows.renderFrameTime = static_cast<float>(end - start) / SDL_NS_PER_MS;
 
         return true;
     }

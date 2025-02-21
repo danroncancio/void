@@ -8,6 +8,7 @@
 #include "renderer.hpp"
 #include "scene_manager.hpp"
 #include "asset_manager.hpp"
+#include "debug_windows.hpp"
 
 namespace lum
 {
@@ -17,6 +18,8 @@ namespace lum
         Renderer renderer;
         AssetManager assetManager;
         SceneManager sceneManager;
+
+        metrics::MetricsWindows metricsWindows;
 
         uint64_t lastTime{};
         uint64_t currentTime{};
