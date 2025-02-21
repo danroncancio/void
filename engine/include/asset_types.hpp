@@ -31,6 +31,16 @@ namespace lum
         const char     *filePath{};
         SDL_Time        lastModifyTime{};
     };
+
+    struct Sound
+    {
+        const char          *tag{};
+        SDL_AudioSpec        audioSpec{};
+        std::vector<uint8_t> buffer;
+        uint32_t             length{};
+        std::string          filePath{};
+        SDL_Time             lastModifyTime{};
+    };
 }
 
 #endif // !ASSET_TYPES_H

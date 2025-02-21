@@ -6,7 +6,8 @@ namespace lum
 {
     Scene::Scene() :
         assetMgr(Engine::Get().assetManager),
-        renderer(Engine::Get().renderer)
+        renderer(Engine::Get().renderer),
+        audioMgr(Engine::Get().audioManager)
     {};
 
     Scene::~Scene() = default;

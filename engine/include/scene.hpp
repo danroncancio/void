@@ -3,6 +3,7 @@
 
 #include "asset_manager.hpp"
 #include "renderer.hpp"
+#include "audio_manager.hpp"
 #include "ecs.hpp"
 #include "engine_components.hpp"
 
@@ -26,6 +27,7 @@ namespace lum
     protected:
         AssetManager &assetMgr;
         Renderer &renderer;
+        AudioManager &audioMgr;
     };
 }
 

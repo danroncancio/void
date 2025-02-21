@@ -1,6 +1,9 @@
 ﻿cmake_minimum_required (VERSION 3.12)
 project ("void")
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+
 # Imgui files
 
 file(GLOB IMGUI_FILES Vendor/imgui/*.cpp Vendor/imgui/*.h)
@@ -42,6 +45,14 @@ set(SDLIMAGE_VENDORED OFF)
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(vendor/sdl_image)
 
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(vendor/libogg)
+
+set(OGG_LIBRARY "${CMAKE_BINARY_DIR}/lib")
+set(OGG_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/libvorbis/include")
+add_subdirectory(vendor/libvorbis)
+
 target_include_directories(void PRIVATE
     engine/include
     vendor/glm
@@ -50,6 +61,8 @@ target_include_directories(void PRIVATE
     vendor/sdl_image/include
     vendor/imgui
     vendor/implot
+    vendor/libogg/include
+    vendor/libvorbis/include
 )
 
 target_link_libraries(void PRIVATE
@@ -57,6 +70,9 @@ target_link_libraries(void PRIVATE
     SDL3::SDL3-static
     SDL3_shadercross::SDL3_shadercross-static
     SDL3_image::SDL3_image-static
+    ogg
+    vorbis
+    vorbisfile
 )
 
 set_property(TARGET void PROPERTY CXX_STANDARD 17)

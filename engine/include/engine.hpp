@@ -18,6 +18,7 @@ namespace lum
         Renderer renderer;
         AssetManager assetManager;
         SceneManager sceneManager;
+        AudioManager audioManager;
 
         metrics::MetricsWindows metricsWindows;
 

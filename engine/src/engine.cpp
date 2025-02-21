@@ -41,6 +41,12 @@ namespace lum
             return false;
         }
 
+        if (!audioManager.Init())
+        {
+            SDL_Log("Failed to initilized audio manager");
+            return false;
+        }
+
         if (!sceneManager.Init())
         {
             SDL_Log("Failed to initialized scene manager");
@@ -67,6 +73,7 @@ namespace lum
 
         sceneManager.Shutdown();
         assetManager.Shutdown();
+        audioManager.Shutdown();
         renderer.Shutdown();
     }
 

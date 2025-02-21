@@ -1,2 +1,4 @@
 build/
 .vs
+vendor/libogg
+vendor/libvorbis

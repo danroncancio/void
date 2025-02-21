@@ -2,6 +2,7 @@
 
 #include <SDL3_shadercross/SDL_shadercross.h>
 #include <SDL3_image/SDL_image.h>
+#include <vorbis/vorbisfile.h>
 
 #include "utilities.hpp"
 
@@ -56,6 +57,18 @@ namespace lum
         if (it == m_textureStorage.end())
         {
             SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get texture %s from storage", p_tag);
+            return nullptr;
+        }
+
+        return &it->second;
+    }
+
+    Sound *AssetManager::GetSound(const char *p_tag)
+    {
+        auto it = m_soundStorage.find(utils::HashStr32(p_tag));
+        if (it == m_soundStorage.end())
+        {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get sound %s from storage", p_tag);
             return nullptr;
         }
 
@@ -246,6 +259,41 @@ namespace lum
         return true;
     }
 
+    bool AssetManager::LoadSound(const char *p_tag, const char *p_path)
+    {
+        Sound sound;
+
+        std::string fullPath = m_assetsDirectoryPath + p_path;
+
+        if (SDL_strstr(p_path, ".ogg"))
+        {
+            if (!LoadOGG(fullPath.c_str(), &sound.audioSpec, sound.buffer))
+            {
+                return false;
+            }
+
+            sound.length = static_cast<uint32_t>(sound.buffer.size());
+        }
+        else if (SDL_strstr(p_path, ".wav"))
+        {
+            uint8_t *tempBuffer;
+            if (!SDL_LoadWAV(fullPath.c_str(), &sound.audioSpec, &tempBuffer, &sound.length))
+            {
+                SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load WAV file: %s", SDL_GetError());
+                return false;
+            }
+
+            sound.buffer.assign(tempBuffer, tempBuffer + sound.length);
+            SDL_free(tempBuffer);
+        }
+
+        m_soundStorage[utils::HashStr32(p_tag)] = std::move(sound);
+
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Sound '%s' loaded from '%s'", p_tag, p_path);
+
+        return true;
+    }
+
     void AssetManager::CheckForModifiedAssets()
     {
         auto &renderer = Engine::Get().renderer;
@@ -358,6 +406,33 @@ namespace lum
         }
 
         SDL_DestroyProcess(shaderCompProc);
+
+        return true;
+    }
+
+    bool AssetManager::LoadOGG(const char *p_path, SDL_AudioSpec *p_spec, std::vector<uint8_t> &p_outBuffer)
+    {
+        OggVorbis_File vf;
+        ov_fopen(p_path, &vf);
+
+        vorbis_info *sound_info = ov_info(&vf, -1);
+        p_spec->channels = sound_info->channels;
+        p_spec->freq = sound_info->rate;
+        p_spec->format = SDL_AUDIO_S16; // 16-bit signed PCM
+
+        int32_t bitstream;
+        char    buffer[4096];
+        int64_t bytes;
+        do
+        {
+            bytes = ov_read(&vf, buffer, sizeof(buffer), 0, 2, 1, &bitstream);
+            if (bytes > 0)
+            {
+                p_outBuffer.insert(p_outBuffer.end(), buffer, buffer + bytes);
+            }
+        } while (bytes > 0);
+
+        ov_clear(&vf);
 
         return true;
     }
