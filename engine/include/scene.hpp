@@ -1,11 +1,16 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include <memory>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "asset_manager.hpp"
 #include "renderer.hpp"
 #include "audio_manager.hpp"
 #include "ecs.hpp"
 #include "engine_components.hpp"
+#include "command.hpp"
 
 namespace lum
 {
@@ -14,20 +19,23 @@ namespace lum
     public:
         bool loaded{};
         ECS ecs;
+        AssetManager &assetMgr;
+        Renderer &renderer;
+        AudioManager &audioMgr;
+
+        std::unordered_map<SDL_Scancode, const char *> commandMap;
+        std::unordered_set<const char *> activeCommands;
 
     public:
         Scene();
         virtual ~Scene();
 
         virtual void Setup() = 0;
-        virtual void Input() = 0;
         virtual void Update(float p_delta) = 0;
         virtual void Draw() = 0;
 
-    protected:
-        AssetManager &assetMgr;
-        Renderer &renderer;
-        AudioManager &audioMgr;
+        void BindCommand(SDL_Scancode p_key, const char *p_command);
+        void DoCommand(Command &p_command);
     };
 }
 

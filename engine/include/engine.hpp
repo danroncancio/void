@@ -44,6 +44,8 @@ namespace lum
         void Update();
         bool Render();
 
+        void HandleCommands(SDL_EventType p_type, SDL_Scancode p_scancode);
+
     private:
         static std::unique_ptr<Engine> m_instance;
 

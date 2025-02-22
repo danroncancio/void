@@ -29,6 +29,8 @@ namespace lum
     struct TimeColorUniform
     {
         float time;
+        int horizontalFrames;
+        int currentFrame;
         alignas(16) vec4 modulateColor;
     };
 

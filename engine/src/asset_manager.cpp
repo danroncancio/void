@@ -24,6 +24,10 @@ namespace lum
     {
         auto &gpuDevice = Engine::Get().renderer.gpuDevice;
 
+        // Release sounds
+
+        m_soundStorage.clear();
+
         // Release textures
 
         for (const auto &[_, texture] : m_textureStorage)

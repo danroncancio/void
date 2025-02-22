@@ -171,6 +171,8 @@ namespace lum
 
                     if constexpr (std::is_same_v<T, cSprite>)
                         DrawSprite(drawDesc.first, arg);
+                    else if constexpr (std::is_same_v<T, cAnimSprite>)
+                        DrawSprite(drawDesc.first, arg.sprite);
 
                 }, drawDesc.second);
             }
@@ -203,7 +205,7 @@ namespace lum
             ProjMatUniform projMatUni = { mat4(1.0f), mat4(1.0f), m_projMat };
             SDL_PushGPUVertexUniformData(m_commandBuffer, 0, &projMatUni, sizeof(ProjMatUniform));
 
-            TimeColorUniform timeColUni = { 0.0f, vec4(1.0f) };
+            TimeColorUniform timeColUni = { 0.0f, 1, 0, vec4(1.0f) };
             SDL_PushGPUFragmentUniformData(m_commandBuffer, 0, &timeColUni, sizeof(TimeColorUniform));
 
             SDL_DrawGPUIndexedPrimitives(m_renderPass, 6, 1, 0, 0, 0);
@@ -250,12 +252,12 @@ namespace lum
         m_modelMat = mat4(1.0f);
         m_modelMat = glm::translate(m_modelMat, vec3(p_translationDesc.position, 0.0f));
         m_modelMat = glm::rotate(m_modelMat, radians(p_translationDesc.rotation), vec3(0.0f, 0.0f, 1.0f));
-        m_modelMat = glm::scale(m_modelMat, vec3(texture->size.x * p_translationDesc.scale, texture->size.y * p_translationDesc.scale, 1.0f));
+        m_modelMat = glm::scale(m_modelMat, vec3((texture->size.x / p_spriteDesc.horizontalFrames) * p_translationDesc.scale, texture->size.y * p_translationDesc.scale, 1.0f));
 
         ProjMatUniform compoundMat{ m_modelMat, m_viewMat, m_projMat };
         SDL_PushGPUVertexUniformData(m_commandBuffer, 0, &compoundMat, sizeof(ProjMatUniform));
 
-        TimeColorUniform timeColUni = { 0.0f, p_spriteDesc.properties.modulateColor };
+        TimeColorUniform timeColUni = { 0.0f, p_spriteDesc.horizontalFrames, p_spriteDesc.currentFrame, p_spriteDesc.properties.modulateColor };
         SDL_PushGPUFragmentUniformData(m_commandBuffer, 0, &timeColUni, sizeof(TimeColorUniform));
 
         SDL_DrawGPUIndexedPrimitives(m_renderPass, 6, 1, 0, 0, 0);

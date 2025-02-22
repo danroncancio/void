@@ -5,7 +5,9 @@
 #include <imgui.h>
 #include <backends/imgui_impl_sdl3.h>
 
-#include "../../game/scenes/test_ground_scn.hpp"
+#include "command.hpp"
+
+#include "../../game/scenes/levels/00_Playground.hpp"
 
 namespace lum
 {
@@ -58,9 +60,9 @@ namespace lum
         // Been thinking of having the registry of autoloads and scenes via a 
         // 'config' file instead of doing it from code.
 
-        sceneManager.RegisterScene("test_ground", std::make_shared<shmup::TestGroundScn>(), true);
+        sceneManager.RegisterScene("playground_lvl", std::make_shared<shmup::PlaygroundLvl>(), true);
 
-        lastTime = SDL_GetTicksNS();
+        lastTime = SDL_GetPerformanceCounter();
 
         SDL_Log("Engine initialized");
 
@@ -94,9 +96,14 @@ namespace lum
             break;
         case SDL_EVENT_KEY_DOWN:
             if (p_event->key.scancode == SDL_SCANCODE_F11)
-            {
                 renderer.ToggleWindowFullscreen();
-            }
+
+            HandleCommands(p_event->key.type, p_event->key.scancode);
+
+            break;
+        case SDL_EVENT_KEY_UP:
+            HandleCommands(p_event->key.type, p_event->key.scancode);
+
             break;
         default:
             break;
@@ -109,8 +116,8 @@ namespace lum
 
         assetManager.CheckForModifiedAssets();
 
-        currentTime = SDL_GetTicksNS();
-        deltaTime = static_cast<float>(currentTime - lastTime) / SDL_NS_PER_SECOND;
+        currentTime = SDL_GetPerformanceCounter();
+        deltaTime = static_cast<float>(currentTime - lastTime) / SDL_GetPerformanceFrequency();
         lastTime = currentTime;
 
         metricsWindows.StatsUpdate(deltaTime);
@@ -139,5 +146,17 @@ namespace lum
         metricsWindows.renderFrameTime = static_cast<float>(end - start) / SDL_NS_PER_MS;
 
         return true;
+    }
+
+    void Engine::HandleCommands(SDL_EventType p_type, SDL_Scancode p_scancode)
+    {
+        // Check if current scene has an action mapped to this scancode/keybind
+
+        if (sceneManager.currentScene->commandMap.find(p_scancode) == sceneManager.currentScene->commandMap.end())
+            return;
+
+        CommandType type = (p_type == SDL_EVENT_KEY_DOWN) ? CommandType::START : CommandType::END;
+
+        sceneManager.currentScene->DoCommand(Command{ sceneManager.currentScene->commandMap.at(p_scancode), type });
     }
 }

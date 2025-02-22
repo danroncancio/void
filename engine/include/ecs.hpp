@@ -256,15 +256,25 @@ namespace lum
             }
         }
 
-        std::vector<Entity> QueryEntitiesWithSignature(Signature p_querySignature)
+        std::vector<Entity> QueryEntitiesWithSignature(Signature p_querySignature, bool p_atLeastOne = false)
         {
             std::vector<Entity> entities;
 
             for (Entity e = 0; e < nextEntityID; ++e)
             {
-                if (m_entitySignatures[e][0] && (m_entitySignatures[e] & p_querySignature) == p_querySignature)
+                if (!p_atLeastOne)
                 {
-                    entities.push_back(e);
+                    if ((m_entitySignatures[e] & p_querySignature) == p_querySignature)
+                    {
+                        entities.push_back(e);
+                    }
+                }
+                else
+                {
+                    if ((m_entitySignatures[e] & p_querySignature).any())
+                    {
+                        entities.push_back(e);
+                    }
                 }
             }
 

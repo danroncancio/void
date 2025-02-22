@@ -55,6 +55,7 @@ add_subdirectory(vendor/libvorbis)
 
 target_include_directories(void PRIVATE
     engine/include
+    game
     vendor/glm
     vendor/sdl/include
     vendor/sdl_shadercross/include
