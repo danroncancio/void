@@ -8,7 +8,8 @@
 
 #include "asset_manager.hpp"
 #include "renderer_types.hpp"
-#include "engine_components.hpp"
+
+#include "components/drawable.hpp"
 
 using namespace glm;
 
@@ -44,8 +45,9 @@ namespace lum
 
         void PreRender();
         bool RenderFrame();
-        void AddToDrawQueue(DrawDesc &p_drawDesc);
-        void DrawSprite(const cTranslation &p_translationDesc, const cSprite &p_spriteDesc);
+        void AddToDrawQueue(shmup::cDrawable *p_drawable);
+        void DrawSprite(shmup::cDrawable *p_drawable);
+        void DrawAnimSprite(shmup::cDrawable *p_drawable);
 
     private:
         bool m_windowFullscreen{};
@@ -70,7 +72,8 @@ namespace lum
 
         SDL_GPUViewport m_windowViewport{};
 
-        std::vector<DrawDesc> m_frameDrawQueue{};
+        // std::vector<DrawDesc> m_frameDrawQueue{};
+        std::vector<shmup::cDrawable *> m_drawQueue{};
         std::unordered_map<uint32_t, GraphicPipelineInfo> m_graphicsPipelines{};
 
         SDL_GPUGraphicsPipeline *currentPipelineBinded{ nullptr };

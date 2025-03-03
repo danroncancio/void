@@ -3,8 +3,6 @@
 
 #include <SDL3/SDL.h>
 
-#include "ecs.hpp"
-
 namespace lum
 {
     enum class CommandType

@@ -12,6 +12,10 @@
 
 #include "utilities.hpp"
 
+#include "components/sprite.hpp"
+#include "components/anim_sprite.hpp"
+#include "components/translation.hpp"
+
 namespace lum
 {
     Renderer::Renderer() = default;
@@ -157,29 +161,28 @@ namespace lum
 
             // Sort draw queue by layer
 
-            std::sort(m_frameDrawQueue.begin(), m_frameDrawQueue.end(), [](const auto &a, const auto &b) {
-                return std::visit([](const auto &arg) { return arg.properties.layer; }, a.second) < 
-                       std::visit([](const auto &arg) { return arg.properties.layer; }, b.second);
+            std::sort(m_drawQueue.begin(), m_drawQueue.end(), [](const auto &a, const auto &b) {
+                return a->layer < b->layer;
             });
 
             // Drawing
 
-            for (const auto &drawDesc : m_frameDrawQueue)
+            for (auto &drawable : m_drawQueue)
             {
-                std::visit([&](auto &&arg) {
-                    using T = std::decay_t<decltype(arg)>;
-
-                    if constexpr (std::is_same_v<T, cSprite>)
-                        DrawSprite(drawDesc.first, arg);
-                    else if constexpr (std::is_same_v<T, cAnimSprite>)
-                        DrawSprite(drawDesc.first, arg.sprite);
-
-                }, drawDesc.second);
+                switch (drawable->drawableType)
+                {
+                case shmup::DrawableType::SPRITE:
+                    DrawSprite(drawable);
+                    break;
+                case shmup::DrawableType::ANIM_SPRITE:
+                    DrawAnimSprite(drawable);
+                    break;
+                }
             }
 
             SDL_EndGPURenderPass(m_renderPass);
 
-            m_frameDrawQueue.clear();
+            m_drawQueue.clear();
 
             //
             // Draw render target to window
@@ -224,14 +227,16 @@ namespace lum
         return true;
     }
 
-    void Renderer::AddToDrawQueue(DrawDesc &p_drawDesc)
+    void Renderer::AddToDrawQueue(shmup::cDrawable *p_drawable)
     {
-        m_frameDrawQueue.push_back(p_drawDesc);
+        m_drawQueue.push_back(p_drawable);
     }
 
-    void Renderer::DrawSprite(const cTranslation &p_translationDesc, const cSprite &p_spriteDesc)
+    void Renderer::DrawSprite(shmup::cDrawable *p_drawable)
     {
-        Texture *texture = Engine::Get().assetManager.GetTexture(p_spriteDesc.tag);
+        auto spriteDrawable = static_cast<shmup::cSprite *>(p_drawable);
+
+        Texture *texture = Engine::Get().assetManager.GetTexture(spriteDrawable->textureTag.c_str());
 
         if (currentPipelineBinded != m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline)
         {
@@ -250,14 +255,50 @@ namespace lum
         SDL_BindGPUFragmentSamplers(m_renderPass, 0, &texSamplerBinding, 1);
 
         m_modelMat = mat4(1.0f);
-        m_modelMat = glm::translate(m_modelMat, vec3(p_translationDesc.position, 0.0f));
-        m_modelMat = glm::rotate(m_modelMat, radians(p_translationDesc.rotation), vec3(0.0f, 0.0f, 1.0f));
-        m_modelMat = glm::scale(m_modelMat, vec3((texture->size.x / p_spriteDesc.horizontalFrames) * p_translationDesc.scale, texture->size.y * p_translationDesc.scale, 1.0f));
+        m_modelMat = glm::translate(m_modelMat, vec3(spriteDrawable->translation.position, 0.0f));
+        m_modelMat = glm::rotate(m_modelMat, radians(spriteDrawable->translation.rotation), vec3(0.0f, 0.0f, 1.0f));
+        m_modelMat = glm::scale(m_modelMat, vec3((texture->size.x / spriteDrawable->horizontalFrames) * spriteDrawable->translation.scale, texture->size.y * spriteDrawable->translation.scale, 1.0f));
 
         ProjMatUniform compoundMat{ m_modelMat, m_viewMat, m_projMat };
         SDL_PushGPUVertexUniformData(m_commandBuffer, 0, &compoundMat, sizeof(ProjMatUniform));
 
-        TimeColorUniform timeColUni = { 0.0f, p_spriteDesc.horizontalFrames, p_spriteDesc.currentFrame, p_spriteDesc.properties.modulateColor };
+        TimeColorUniform timeColUni = { 0.0f, spriteDrawable->horizontalFrames, spriteDrawable->currentFrame, spriteDrawable->modulateColor };
+        SDL_PushGPUFragmentUniformData(m_commandBuffer, 0, &timeColUni, sizeof(TimeColorUniform));
+
+        SDL_DrawGPUIndexedPrimitives(m_renderPass, 6, 1, 0, 0, 0);
+    }
+
+    void Renderer::DrawAnimSprite(shmup::cDrawable *p_drawable)
+    {
+        auto animSpriteDrawable = static_cast<shmup::cAnimSprite *>(p_drawable);
+
+        Texture *texture = Engine::Get().assetManager.GetTexture(animSpriteDrawable->textureTag.c_str());
+
+        if (currentPipelineBinded != m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline)
+        {
+            SDL_BindGPUGraphicsPipeline(m_renderPass, m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline);
+
+            currentPipelineBinded = m_graphicsPipelines[utils::HashStr32("texture_quad")].pipeline;
+        }
+
+        SDL_GPUBufferBinding vertBufferBinding{ m_quadVertexBuffer, 0 };
+        SDL_BindGPUVertexBuffers(m_renderPass, 0, &vertBufferBinding, 1);
+
+        SDL_GPUBufferBinding idxBufferBinding{ m_quadIndexBuffer, 0 };
+        SDL_BindGPUIndexBuffer(m_renderPass, &idxBufferBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+        SDL_GPUTextureSamplerBinding texSamplerBinding{ texture->data, m_rtSampler };
+        SDL_BindGPUFragmentSamplers(m_renderPass, 0, &texSamplerBinding, 1);
+
+        m_modelMat = mat4(1.0f);
+        m_modelMat = glm::translate(m_modelMat, vec3(animSpriteDrawable->translation.position, 0.0f));
+        m_modelMat = glm::rotate(m_modelMat, radians(animSpriteDrawable->translation.rotation), vec3(0.0f, 0.0f, 1.0f));
+        m_modelMat = glm::scale(m_modelMat, vec3((texture->size.x / animSpriteDrawable->horizontalFrames) * animSpriteDrawable->translation.scale, texture->size.y * animSpriteDrawable->translation.scale, 1.0f));
+
+        ProjMatUniform compoundMat{ m_modelMat, m_viewMat, m_projMat };
+        SDL_PushGPUVertexUniformData(m_commandBuffer, 0, &compoundMat, sizeof(ProjMatUniform));
+
+        TimeColorUniform timeColUni = { 0.0f, animSpriteDrawable->horizontalFrames, animSpriteDrawable->currentFrame, animSpriteDrawable->modulateColor };
         SDL_PushGPUFragmentUniformData(m_commandBuffer, 0, &timeColUni, sizeof(TimeColorUniform));
 
         SDL_DrawGPUIndexedPrimitives(m_renderPass, 6, 1, 0, 0, 0);

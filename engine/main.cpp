@@ -5,6 +5,8 @@
 #include "src/renderer.cpp"
 #include "src/asset_manager.cpp"
 #include "src/audio_manager.cpp"
+#include "src/actor.cpp"
+#include "src/component.cpp"
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>

@@ -8,8 +8,6 @@
 #include "asset_manager.hpp"
 #include "renderer.hpp"
 #include "audio_manager.hpp"
-#include "ecs.hpp"
-#include "engine_components.hpp"
 #include "command.hpp"
 
 namespace lum
@@ -18,7 +16,6 @@ namespace lum
     {
     public:
         bool loaded{};
-        ECS ecs;
         AssetManager &assetMgr;
         Renderer &renderer;
         AudioManager &audioMgr;
